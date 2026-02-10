@@ -3,7 +3,7 @@ using JLD2
 using SMTPClient
 using Dates
 
-BatchSize = 3
+BatchSize = 2
 # Domain Properties
 Domain = MCTG.DomainProperties_t(N=45, R₀=60.0, btype="PerturbedCircle", m = 5)
 
@@ -65,8 +65,6 @@ while iter < MAX_ITERS && successful_simulations < BatchSize + 1
     iter += 1
 end
 
-MCTG.send_email_alert("shahakjuliacode@gmail.com", "jwdz aiva nuxa nnpc", "Bone Batch Simulations Complete", "s.kuba@qut.edu.au");
-
 # saving data
 current_dir = pwd()
 date_time = Dates.now()
@@ -78,5 +76,7 @@ filename = "/BoneBatchSimData.jld2"
 output_file = output_dir * filename
 @save output_file all_solutions all_embedded_cell_pos embedded_count_iteration_results Ω_iteration_results
 
+# send completion email
+MCTG.send_email_alert("shahakjuliacode@gmail.com", "jwdz aiva nuxa nnpc", "Bone Batch Simulations Complete", "s.kuba@qut.edu.au");
 
 
