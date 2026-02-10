@@ -39,7 +39,9 @@ iter = 1
 successful_simulations = 1
 
 while iter < MAX_ITERS && successful_simulations < BatchSize + 1
-    
+    global iter
+    global successful_simulations
+    global prob_u0
     if iter == 1
         prob_u0 = MCTG.init_problem(Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed)
     end
