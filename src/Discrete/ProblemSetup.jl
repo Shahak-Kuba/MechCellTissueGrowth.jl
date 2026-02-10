@@ -141,3 +141,38 @@ function SetupODEproblem(M, Domain, CellMech, SimTime, Prolif, Death, Embed, Pro
     tspan = (0.0, SimTime.Tmax)
     return ODEProblem(Growth_ODE!,u0,tspan,p), p
 end
+
+
+
+# For free boundary Problem 
+
+function generate_discrete_IC_from_density_profile(Func, Func_Derivative, N, m, L0, eps=0.1)
+    M = N * m
+    # Initial condition setup
+    integral, error = quadgk(x -> Func(x), 0, L0)
+    lambda = M/integral
+
+    function x_interior!(F,x)
+        for i in 1:length(F)
+            if i == 1
+                F[i] = ((1/(x[i]-0)) + (1/(x[i]-x[i+1]))) / ((0-x[i+1])/2) - lambda*Func_Derivative(x[i])
+            elseif i == length(F)
+                F[i] = ((1/(x[i]-x[i-1]))+(1/(x[i]-L0))) / ((x[i-1]-L0)/2) - lambda*Func_Derivative(x[i])
+            else
+                F[i] = ((1/(x[i]-x[i-1]))+(1/(x[i]-x[i+1]))) / ((x[i-1]-x[i+1])/2) - lambda*Func_Derivative(x[i])
+            end
+        end
+    end
+    
+    x_guess = collect(range(eps, stop=L0-eps, length=M-1))
+    sol = nlsolve(x_interior!, x_guess) 
+    x_interior_sol = sol.zero
+    initial_condition_discrete = vcat(0.0, x_interior_sol, L0)
+    return initial_condition_discrete
+end
+
+function SetupODEproblem(TissueMech, SimTime, u0, y)
+    p = (TissueMech, SimTime, y)
+    tspan = (0.0, SimTime.Tmax)
+    return ODEProblem(FB_ODE!,u0,tspan,p), p
+end

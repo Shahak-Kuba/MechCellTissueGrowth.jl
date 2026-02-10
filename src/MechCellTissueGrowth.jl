@@ -12,6 +12,7 @@ module MechCellTissueGrowth
     using StatsModels
     using Statistics
     using Interpolations
+    using NLsolve
     # PACKAGES FOR DATA SMOOTHING
     using Loess
     # PACKAGES USED for benchmarking
@@ -38,6 +39,10 @@ module MechCellTissueGrowth
     include("Discrete/GeneralEquations.jl")
     include("Discrete/ProblemSetup.jl")
 
+
+    # Free Boundary CODE
+    include("Continuum/FreeBoundary/FB_1D_Solver.jl")
+
     # Evolving Interface CODE
     # continuum simulation code
     include("Continuum/EvolvingInterface/FVM_K-T/FVM_ContinuumSolver.jl")
@@ -55,7 +60,7 @@ module MechCellTissueGrowth
     include("Discrete/EvolvingInterface/ModifierFncs.jl")
     include("Discrete/EvolvingInterface/PoreBoundaries.jl")
     include("Discrete/EvolvingInterface/PostSimulation.jl")
-    include("Discrete/EvolvingInterface/Model/GrowthCallbacks.jl")
+    include("Discrete/EvolvingInterface/Model/GrowthCallBacks.jl")
     include("Discrete/EvolvingInterface/GrowthODEproblem.jl")
     include("Discrete/EvolvingInterface/GrowthSimulation.jl")
 
