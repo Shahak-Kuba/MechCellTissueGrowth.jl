@@ -34,10 +34,11 @@ all_embedded_cell_pos = Vector{Matrix{Float64}}[]
 
 prob_u0 = []
 MAX_ITERS = 2 * BatchSize
+
 iteration = 1
 successful_simulations = 1
 
-@time while iteration < MAX_ITERS && successful_simulations < BatchSize + 1
+while iteration < MAX_ITERS && successful_simulations < BatchSize + 1
 
     if iteration == 1
         prob_u0 = MCTG.init_problem(Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed)
@@ -53,7 +54,7 @@ successful_simulations = 1
         if successful_simulations == 1
             push!(t, sol.t)
         end
-        println("Simulation $iteration / $BatchSize")
+        println("Simulation $successful_simulations / $BatchSize")
         successful_simulations += 1
     else
         println("Simulation $iteration failed to reach Tmax. Final time: ", sol.t[end])
