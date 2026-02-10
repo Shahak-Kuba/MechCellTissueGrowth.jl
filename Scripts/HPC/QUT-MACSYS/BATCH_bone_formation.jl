@@ -35,16 +35,16 @@ all_embedded_cell_pos = Vector{Matrix{Float64}}[]
 prob_u0 = []
 MAX_ITERS = 2 * BatchSize
 
-iteration = 1
+iter = 1
 successful_simulations = 1
 
-while iteration < MAX_ITERS && successful_simulations < BatchSize + 1
-
-    if iteration == 1
+while iter < MAX_ITERS && successful_simulations < BatchSize + 1
+    
+    if iter == 1
         prob_u0 = MCTG.init_problem(Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed)
     end
     HomCellMech = MCTG.generate_homogeneous_population(CellMech, Domain.N, Domain.m);
-    sol, embedded_cells, embed_cell_count = run_simulation_with_init(CellMech, Domain, SimTime, Prolif, Death, Embed, ProlifEmbed, iteration, prob_u0)
+    sol, embedded_cells, embed_cell_count = run_simulation_with_init(CellMech, Domain, SimTime, Prolif, Death, Embed, ProlifEmbed, iter, prob_u0)
 
     if sol.t[end] == SimTime.Tmax
         push!(all_solutions, sol)
@@ -57,10 +57,10 @@ while iteration < MAX_ITERS && successful_simulations < BatchSize + 1
         println("Simulation $successful_simulations / $BatchSize")
         successful_simulations += 1
     else
-        println("Simulation $iteration failed to reach Tmax. Final time: ", sol.t[end])
+        println("Simulation $iter failed to reach Tmax. Final time: ", sol.t[end])
     end
 
-    iteration += 1
+    iter += 1
 end
 
 MCTG.send_email_alert("shahakjuliacode@gmail.com", "jwdz aiva nuxa nnpc", "Bone Batch Simulations Complete", "s.kuba@qut.edu.au");
