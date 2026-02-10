@@ -80,10 +80,7 @@ function find_closest_point_in_centroid_direction(sol_0::Matrix{Float64}, sol_en
     return closest_pairs
 end
 
-function atan2pi(y, x)
-    angle = atan(y, x)
-    return angle >= 0 ? angle : angle + 2π
-end
+
 
 function closest_points_to_line(interface_0, interface_end, p1, p2)
     sol_u = interface_0

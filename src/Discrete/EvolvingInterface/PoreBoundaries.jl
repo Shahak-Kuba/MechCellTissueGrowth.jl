@@ -353,8 +353,8 @@ end
 
 # --- helpers for angles ---
 function atan2pi(y, x)
-    θ = atan.(y, x)
-    θ .< 0 ? θ .+ 2π : θ
+    angle = atan(y, x)
+    return angle >= 0 ? angle : angle + 2π
 end
 
 "Rotate a sequence so it starts at index k."
