@@ -10,6 +10,7 @@ module MechCellTissueGrowth
     using QuadGK
     using Roots
     using StatsModels
+    using GLM
     using Statistics
     using Interpolations
     using NLsolve
@@ -42,6 +43,9 @@ module MechCellTissueGrowth
 
     # Free Boundary CODE
     include("Continuum/FreeBoundary/FB_1D_Solver.jl")
+    include("Discrete/FreeBoundary/FreeBoundaryODEProblem.jl")
+    include("Discrete/FreeBoundary/FreeBoundarySimulation.jl")
+
 
     # Evolving Interface CODE
     # continuum simulation code

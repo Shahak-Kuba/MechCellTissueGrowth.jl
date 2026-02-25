@@ -11,6 +11,8 @@
     lBC::Symbol = :fixed  # left boundary condition (:fixed or :free)
     F::Function = ρ -> k * (1 / ρ - a) # Force function from Hookean spring
     D::Function = ρ -> α / ρ^2 # Diffusivity function from Hookean spring
+    P::Function = ρ -> 0.0 # Proliferation function
+    A::Function = ρ -> 0.0 # Apoptosis function
 end
 
 # ODE problem (Spatially discretised)
@@ -21,6 +23,8 @@ function rhs!(du, u, p::FBParams, t)
 
     F = p.F
     D = p.D
+    P = p.P
+    A = p.A
 
     diffusivity_method = "arithmetic"
 
@@ -60,7 +64,7 @@ function rhs!(du, u, p::FBParams, t)
             else
                 error("Diffusivity method not recognised")
             end
-            dqidt = (1/L^2) * (1/Δx^2) * (Dhp * ( (q[ii+1] - q[ii]) ) - Dhm * ( (q[ii] - q_left_ghost) ) )
+            dqidt = (1/L^2) * (1/Δx^2) * (Dhp * ( (q[ii+1] - q[ii]) ) - Dhm * ( (q[ii] - q_left_ghost) ) ) + q[ii] * ( P(1/q[ii]) - A(1/q[ii]) )
         elseif ii == N
             # different diffusivity averaging methods
             if diffusivity_method == "arithmetic"
@@ -76,7 +80,7 @@ function rhs!(du, u, p::FBParams, t)
                 error("Diffusivity method not recognised")
             end
             # upwinding on first term (advection term)
-            dqidt = (1 / L) * dLdt * ( (q[ii] - q[ii-1])/(Δx) ) + (1/L^2) * (1/Δx) * (Dhp * ( (q_right_ghost - q[ii]) / (Δx) ) - Dhm * ( (q[ii] - q[ii-1]) / (Δx) ) )
+            dqidt = (1 / L) * dLdt * ( (q[ii] - q[ii-1])/(Δx) ) + (1/L^2) * (1/Δx) * (Dhp * ( (q_right_ghost - q[ii]) / (Δx) ) - Dhm * ( (q[ii] - q[ii-1]) / (Δx) ) ) + q[ii] * ( P(1/q[ii]) - A(1/q[ii]) )
         else
             z_i = (ii-1) * Δx
             # different diffusivity averaging methods
@@ -93,7 +97,7 @@ function rhs!(du, u, p::FBParams, t)
                 error("Diffusivity method not recognised")
             end
             # upwinding on first term (advection term)
-            dqidt = (z_i / L) * dLdt * ( (q[ii] - q[ii-1])/(Δx) ) + (1/L^2) * (1/Δx) * (Dhp * ( (q[ii+1] - q[ii]) / (Δx) ) - Dhm * ( (q[ii] - q[ii-1]) / (Δx) ) )
+            dqidt = (z_i / L) * dLdt * ( (q[ii] - q[ii-1])/(Δx) ) + (1/L^2) * (1/Δx) * (Dhp * ( (q[ii+1] - q[ii]) / (Δx) ) - Dhm * ( (q[ii] - q[ii-1]) / (Δx) ) ) + q[ii] * ( P(1/q[ii]) - A(1/q[ii]) )
         end
         du[ii] = dqidt
     end
@@ -109,3 +113,8 @@ function make_initial_condition_FB(N; U0fun = z -> 1.0 , L0 = 5.0)
     return vcat(U0, L0)
 end
 
+function FBPDEsolve(p::FBParams, y0, tspan) 
+    prob = ODEProblem(rhs!, y0, tspan, p)
+    sol = solve(prob, Rodas5P(), saveat=vcat([0.0:0.0001:tspan[2]]...))
+    return sol
+end

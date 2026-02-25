@@ -127,16 +127,6 @@ function postSimulation(sol, p, AllCellMech)
 
     u = [Matrix((reshape(vec, 2, Int(length(vec)/2)))) for vec in sol.u]
 
-    # adding periodic boundary node in 1D case
-    if Domain.domain_type == "1D"
-        if Domain.btype == "InvertedBellCurve"
-            dom = 1500
-        else
-            dom = 2π
-        end
-        u = [[vec; (vec[1,:] + [dom,0])'] for vec in u]
-    end
-
 
     for ii in 1:s
         Area[ii] = Ω(u[ii]) # area calculation
@@ -154,6 +144,39 @@ function postSimulation(sol, p, AllCellMech)
         push!(Κ, kap)
     end
 
+    return SimResults_t(Domain.btype, sol.t[1:s], u[1:s], ∑F, DENSITY, vₙ, Area, ψ, Κ, Cell_Count)
+end
+
+function postSimulation1D(sol, p, AllCellMech)
+    # this post simulation code is for 1D simulations where there is no growth
+    Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed = p
+
+    c = size(sol.t, 1)
+    s = min(c, size(AllCellMech,1))
+    Area = Vector{Float64}(undef, s) # this will not be used for 1D but we keep it for consistency in the data structure
+    Cell_Count = Vector{Float64}(undef, s)
+    ∑F = Vector{Vector{Float64}}(undef, 0)
+    ψ = Vector{Vector{Float64}}(undef, 0)
+    DENSITY = Vector{Vector{Float64}}(undef, 0)
+    vₙ = Vector{Vector{Float64}}(undef, 0) # this will not be used for 1D but we keep it for consistency in the data structure
+    Κ = Vector{Vector{Float64}}(undef, 0) # this will not be used for 1D but we keep it for consistency in the data structure
+
+    u = [Matrix((reshape(vec, 2, Int(length(vec)/2)))) for vec in sol.u]
+
+    for ii in 1:s
+        Cell_Count[ii] = (size(u[ii],2)-1)/Domain.m
+        if Domain.domain_type == "2D"
+            Fnet, nV, den, stre, kap = PostCalcs2D(u[ii], p, AllCellMech[ii])
+        else
+            Fnet, nV, den, stre, kap = PostCalcs1D(u[ii], p)
+        end
+
+        push!(∑F, Fnet)
+        push!(vₙ, nV)
+        push!(DENSITY, den)
+        push!(ψ, stre)
+        push!(Κ, kap)
+    end
     return SimResults_t(Domain.btype, sol.t[1:s], u[1:s], ∑F, DENSITY, vₙ, Area, ψ, Κ, Cell_Count)
 end
 

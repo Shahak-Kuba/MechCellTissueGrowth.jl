@@ -77,6 +77,7 @@ Plots.plot!(points_array[1,:],points_array[2,:],linewidth=10)
 
 
 function equidistant_normal_points_matrix(segments::Matrix{Float64}, distance::Float64, cell_length_thresh::Float64)
+    plotting_segments = []
     # find the total length of the cell
     segment_lengths = Float64[]
     for i in 1:size(segments, 2)-1
@@ -87,30 +88,37 @@ function equidistant_normal_points_matrix(segments::Matrix{Float64}, distance::F
     end
     cs = cumsum(segment_lengths)
     cell_body_segments = count(<(cell_length_thresh), cs)
+    
+    if cell_body_segments == 0
+        cell_body_segments = 1
+    end
+
     #println("cell length: $cs")
     
-    if cell_body_segments >= size(segments, 2)-1 # if the cell is too short, we make it longer for visualisation
+    if cell_body_segments <= size(segments, 2)-1 || cs[end] < cell_length_thresh# if the cell is too short, we make it longer for visualisation
         scaled_pts, s, Lold = scale_curve_to_length(segments, cs[end], cell_length_thresh; anchor=:centroid)
-        segments = scaled_pts
-        println("scaled cell from length $Lold to $cell_length_thresh with scale factor $s")
+        plotting_segments = scaled_pts
+        #println("scaled cell from length $Lold to $cell_length_thresh with scale factor $s")
+    else
+        plotting_segments = segments
     end
 
     points_above = []
     points_below = []
 
-    shape = :ellipse
-    println("cell body shape: $shape")
+    shape = :none
+    #println("cell body shape: $shape")
 
     if shape == :ellipse
-        KubaPhD.build_outline_ellipse!(points_above, points_below, segments; max_radius=distance)
+        build_outline_ellipse!(points_above, points_below, plotting_segments; max_radius=distance)
     else
         # Loop through each segment (each column in the matrix)
-        for i in 1:min(cell_body_segments, size(segments, 2)-1)
-            p1 = (segments[1, i], segments[2, i])         # Starting point
-            p2 = (segments[1, i+1], segments[2, i+1])     # Ending point
+        for i in 1:min(cell_body_segments, size(plotting_segments, 2)-1)
+            p1 = (plotting_segments[1, i], plotting_segments[2, i])         # Starting point
+            p2 = (plotting_segments[1, i+1], plotting_segments[2, i+1])     # Ending point
 
             # Check if the segment is valid
-            if i == size(segments, 2)
+            if i == size(plotting_segments, 2)
                 break  # Skip the last point as it has no next point
             end
 
@@ -146,7 +154,7 @@ function equidistant_normal_points_matrix(segments::Matrix{Float64}, distance::F
         end
     end
 
-    ordered_points = [hcat(segments[:,1], hcat(points_above...), segments[:,cell_body_segments+1], hcat(reverse(points_below)...), segments[:,1])][1]
+    ordered_points = [hcat(plotting_segments[:,1], hcat(points_above...), plotting_segments[:,cell_body_segments+1], hcat(reverse(points_below)...), plotting_segments[:,1])][1]
 
     return ordered_points
 end

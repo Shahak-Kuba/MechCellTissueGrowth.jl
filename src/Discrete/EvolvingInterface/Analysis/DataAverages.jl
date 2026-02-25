@@ -37,3 +37,22 @@ function AnalyseCellCultureData(file_path)
     return all_days, all_mean_density, all_mean_coverage, avg_density_of_all_exp
 
 end
+
+function AnalyseBoneFormationVelocity(all_solutions)
+    mean_Vn = 0.0
+    min_mean_Vn = Inf
+    max_mean_Vn = 0.0
+    for ii in axes(all_solutions,1)
+        sim_mean = mean(mean.(all_solutions[ii].Vₙ))
+        if sim_mean < min_mean_Vn
+            min_mean_Vn = sim_mean
+        end
+        if sim_mean > max_mean_Vn
+            max_mean_Vn = sim_mean
+        end
+        mean_Vn += sim_mean
+    end
+    mean_Vn = mean_Vn / length(all_solutions)
+    println("min Vₙ: $min_mean_Vn, avg Vₙ: $mean_Vn, max Vₙ: $max_mean_Vn")
+    return (min_mean_Vn, mean_Vn, max_mean_Vn)
+end

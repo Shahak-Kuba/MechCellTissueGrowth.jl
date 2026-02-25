@@ -26,11 +26,6 @@ This function sets up and runs 2D simulations for different stiffness coefficien
 # Returns
 A vector of vectors of `SimResults_t` objects. Each inner vector represents the simulation results for different boundary types under a specific stiffness coefficient.
 
-# Example
-```julia
-all_results = sim2D(N,m,R₀,D,l₀,kf,η,growth_dir,Tmax,δt,btypes,dist_type,
-                        prolif, death, embed, α, β, γ, event_δt, seed, NumSaveTimePoints);
-```
 """
 
 function GrowthSimulation(Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed, Seed, NumSaveTimePoints)

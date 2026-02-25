@@ -255,7 +255,7 @@ function analyse_wallThickness_density(all_solutions, all_embedded_cell_pos)
         sol_0 = interpolate_polygon_matrix(sol.u[1], 2000)
         sol_end = interpolate_polygon_matrix(sol.u[end], 2000)
 
-        centroid = KubaPhD.calc_shape_centroid(sol, size(sol.u, 1))
+        centroid = calc_shape_centroid(sol, size(sol.u, 1))
         WTh_asymmetry_ratio, p1, p2, p3, p4 = find_largest_WTh_asymmetry_ratio(sol_0, sol_end, centroid)
 
 

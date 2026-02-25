@@ -45,7 +45,7 @@ while iter < MAX_ITERS && successful_simulations < BatchSize + 1
     if iter == 1
         prob_u0 = MCTG.init_problem(Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed)
     end
-    HomCellMech = MCTG.generate_homogeneous_population(CellMech, Domain.N, Domain.m);
+    #HomCellMech = MCTG.generate_homogeneous_population(CellMech, Domain.N, Domain.m);
     sol, embedded_cells, embed_cell_count = run_simulation_with_init(CellMech, Domain, SimTime, Prolif, Death, Embed, ProlifEmbed, iter, prob_u0)
 
     if sol.t[end] == SimTime.Tmax

@@ -137,3 +137,15 @@ total time, time step, and event trigger settings.
     periodic_δt::Float64 = 4.0
     event_length:: Float64 = 0.0 # make this > 0 in the case that event_trigger is Periodic
 end
+
+@kwdef struct FB_IC_t
+    q0::Function = x -> 2.0
+    q0_der::Function = x -> 0.0
+    L0::Float64 = 10.0
+end
+
+struct ContinuumSolution_t
+    t::Vector{Float64}
+    u::Vector{Vector{Float64}}
+end
+
