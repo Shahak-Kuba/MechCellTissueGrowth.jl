@@ -111,7 +111,7 @@ shape, and type.
     btype::String = "circle"  #Options: ["circle", "triangle", "square", "hex", "star","cross"]
     dist_type::String = "Linear" 
     Ω_0::Float64 = π*R₀^2
-
+    dir_to_EXP_Image::String = ""
     #DomainProperties_t(N, m, R₀, domain_type, btype, dist_type) = new(N, m, R₀, domain_type, btype, dist_type, π*R₀^2)
 end
 

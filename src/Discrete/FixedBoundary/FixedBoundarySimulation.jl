@@ -1,4 +1,4 @@
-function FreeBoundarySimulation(FB_IC, Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed, Seed, NumSaveTimePoints)
+function FixedBoundarySimulation(FB_IC, Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed, Seed, NumSaveTimePoints)
     M = Int(Domain.m * Domain.N) # total number of springs along the interface
     savetimes = LinRange(0, SimTime.Tmax, NumSaveTimePoints)
     # calculating how many digits are in SimTime.δt 
@@ -29,7 +29,7 @@ function FreeBoundarySimulation(FB_IC, Domain, CellMech, SimTime, Prolif, Death,
 
     HomCellMech = generate_homogeneous_population_FB(CellMech, Domain.N, Domain.m);
     #println("ks = " * string(HomCellMech.kₛ[1]) * ", η = " * string(HomCellMech.η) * ", a = " * string(HomCellMech.a[1]))
-    prob, p = SetupFBODEproblem(FB_IC, M, Domain, HomCellMech, SimTime, Prolif, Death, Embed, ProlifEmbed)
+    prob, p = SetupFixedBoundaryODEproblem(FB_IC, M, Domain, HomCellMech, SimTime, Prolif, Death, Embed, ProlifEmbed)
     
     Set_Random_Seed(Seed)
    
@@ -52,7 +52,7 @@ function FreeBoundarySimulation(FB_IC, Domain, CellMech, SimTime, Prolif, Death,
 end
 
 
-function FreeBoundarySimulation_given_IC(IC::Vector{Float64}, Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed, Seed, NumSaveTimePoints)
+function FixedBoundarySimulation_given_IC(IC::Vector{Float64}, Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed, Seed, NumSaveTimePoints)
     M = Int(Domain.m * Domain.N) # total number of springs along the interface
     savetimes = LinRange(0, SimTime.Tmax, NumSaveTimePoints)
     # calculating how many digits are in SimTime.δt 
@@ -75,8 +75,9 @@ function FreeBoundarySimulation_given_IC(IC::Vector{Float64}, Domain, CellMech, 
     cbs = CallbackSet(save_CellMech_cb, event_cb)
 
     HomCellMech = generate_homogeneous_population_FB(CellMech, Domain.N, Domain.m);
+    println("k = $(HomCellMech.kₛ), η = $(HomCellMech.η)")
     #println("ks = " * string(HomCellMech.kₛ[1]) * ", η = " * string(HomCellMech.η) * ", a = " * string(HomCellMech.a[1]))
-    prob, p = SetupFBODEproblem_given_IC(IC, M, Domain, HomCellMech, SimTime, Prolif, Death, Embed, ProlifEmbed)
+    prob, p = SetupFixedBoundaryODEproblem_given_IC(IC, M, Domain, HomCellMech, SimTime, Prolif, Death, Embed, ProlifEmbed)
     
     Set_Random_Seed(Seed)
    

@@ -159,7 +159,7 @@ This function initializes the positions of particles or cells based on the speci
 # Returns
 An array of initial positions.
 """
-function u0SetUp(btype,R₀,N,dist_type,domain_type)
+function u0SetUp(btype,R₀,N,dist_type,domain_type; dir_to_img="")
     # setting up initial conditions
     u0 = ElasticMatrix{Float64}(undef,2,N)
 
@@ -243,19 +243,11 @@ function u0SetUp(btype,R₀,N,dist_type,domain_type)
             θ = collect(NodeDistribution(0.0,2*π,N+1,dist_type)) 
             pop!(θ)
             @views u0 .= reverse!([X(R,θ)'; -Y(R,θ)'], dims=2);
-        elseif btype == "Custom_Image"
-            R_img, θ_img = KubaPhD.generate_r_θ_from_custom_image(readdir("./scripts/MPQC"; join=true)[1],500)
-            #println(R_img, θ_img)
-            R_img_normalised = R_img ./ minimum(R_img)
-            loess_model = loess(θ_img,R_img_normalised,span=0.05)
-            θ_range = LinRange(0,2π,N);
-            ΔR_loess = predict(loess_model, θ_range);
-            R = R₀ .* ΔR_loess;
-            θ = collect(NodeDistribution(0.0,2*π,N+1,dist_type)) 
-            pop!(θ)
-            @views u0 .= [X(R,θ)'; -Y(R,θ)'];
-        elseif btype == "Custom_Image1"
-            R_img, θ_img = KubaPhD.generate_r_θ_from_custom_image(readdir("./scripts/MPQC"; join=true)[2],500)
+        elseif btype == "Exp_Image"
+            if dir_to_img == ""
+                error("dir_to_img must be provided for btype = Exp_Image")
+            end
+            R_img, θ_img = MechCellTissueGrowth.generate_r_θ_from_custom_image(dir_to_img,500)
             #println(R_img, θ_img)
             R_img_normalised = R_img ./ minimum(R_img)
             loess_model = loess(θ_img,R_img_normalised,span=0.05)
@@ -405,7 +397,7 @@ function generate_r_θ_from_custom_image(img_path::AbstractString, M::Int; close
         XYc = vcat(XYs, XYs[1, :]')
         rc  = vcat(r, r[1])
         θc  = vcat(θs, 2π)        # force exact 2π at the last sample
-        return rc, θc, XY
+        return rc, θc, XYc
     else
         # open sequence spanning [0, 2π) (no explicit 2π point)
         return r, θs, XY

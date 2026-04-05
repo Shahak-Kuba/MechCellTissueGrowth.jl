@@ -11,11 +11,39 @@ SimTime = MCTG.SimTime_t(Tmax=10, δt=0.001, event_δt=0.001)
 
 FB_IC = MCTG.FB_IC_t(q0 = x -> 2.0, q0_der = x -> 0.0, L0 = 10.0)
 
-Seed = 1
+Seed = 2
 NumSaveTimePoints = 1000
 
-sol = MCTG.FreeBoundarySimulation(FB_IC, Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed, Seed, NumSaveTimePoints)
+sol = MCTG.FreeBoundarySimulation(FB_IC, Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed, Seed, NumSaveTimePoints);
 
+f = Figure(size=(600,600));
+ax = Axis(f[1,1], aspect=1, xlabel=L"$x$", ylabel=L"$t$", title=L"$m = 1$", xlabelsize=32, ylabelsize=32, xticklabelsize=24, yticklabelsize=24, limits=(-1,50,-1,11));
+#lines!(ax, collect(LinRange(0,60, 200)), S.(collect(LinRange(0,60, 200))), color=:black, linewidth=5, label="Substrate");
+
+for jj in 1:200:length(sol.t)
+        x = sol.u[jj][1,:]
+        t = sol.t[jj]
+        #y = sol.u[ii][2,:]
+        lines!(ax, x, t*ones(size(x)), color=:black, linewidth=3);
+        scatter!(ax, x, t*ones(size(x)), color=:red, markersize=10);
+end
+
+display(f)
+
+f = Figure(size=(600,600));
+ax = Axis(f[1,1], aspect=1, xlabel=L"$x$", ylabel=L"$q_{i}$", xlabelsize=32, ylabelsize=32, xticklabelsize=24, yticklabelsize=24, limits=(0,45,0,3));
+#lines!(ax, collect(LinRange(0,60, 200)), S.(collect(LinRange(0,60, 200))), color=:black, linewidth=5, label="Substrate");
+
+for jj in 1:200:length(sol.t)
+        x = sol.u[jj][1,:]
+        q = sol.Density[jj]
+        #y = sol.u[ii][2,:]
+        stairs!(ax, x, q, label="t = $(sol.t[jj])", linewidth=3, step=:center);
+end
+
+display(f)
+
+"""
 m_vals = [2, 4, 10]
 all_cell_boundary_positions = []
 partial_solutions = []
@@ -88,5 +116,6 @@ for m in m_vals
     push!(all_final_spring_pos, final_spring_pos)
 
 
-    println("Completed for m = $m")
+    println("Completed for m = m")
 end
+"""

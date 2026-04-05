@@ -209,8 +209,6 @@ function E(event_f, ρ, γ, fncs_type)
                     E_rate[ii] = 0.0
                 end
             end
-            return E_rate
-
         end
     else
         return zeros(size(ρ))

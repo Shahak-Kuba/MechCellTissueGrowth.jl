@@ -14,6 +14,7 @@ module MechCellTissueGrowth
     using Statistics
     using Interpolations
     using NLsolve
+    using SparseArrays
     # PACKAGES FOR DATA SMOOTHING
     using Loess
     # PACKAGES USED for benchmarking
@@ -45,6 +46,10 @@ module MechCellTissueGrowth
     include("Continuum/FreeBoundary/FB_1D_Solver.jl")
     include("Discrete/FreeBoundary/FreeBoundaryODEProblem.jl")
     include("Discrete/FreeBoundary/FreeBoundarySimulation.jl")
+
+    # Fixed Boundary code
+    include("Discrete/FixedBoundary/FixedBoundaryODEProblem.jl")
+    include("Discrete/FixedBoundary/FixedBoundarySimulation.jl")
 
 
     # Evolving Interface CODE

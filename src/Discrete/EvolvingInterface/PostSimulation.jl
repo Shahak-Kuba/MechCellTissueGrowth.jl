@@ -12,13 +12,26 @@ This function computes various physical quantities like force, density, velocity
 # Returns
 A tuple containing the sum of forces, normal velocity, density, stress, and curvature for each element in the state vector.
 """
-function PostCalcs1D(u, p)
-    Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed, aₘ, kₘ, ηₘ, kfₘ = p
+function PostCalcs1D(u, p, CellMech_at_t)
+    Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed = p
+
+    kₘ = CellMech_at_t[1]
+    aₘ = CellMech_at_t[2]
+    kfₘ = CellMech_at_t[3]
+    growth_dir = CellMech_at_t[4]
+    η = CellMech.η
+
+    uᵢ₊₁ = circshift(u,1)
+    uᵢ₋₁ = circshift(u,-1)
 
     if Domain.btype == "InvertedBellCurve"
         dom = 1500; # For Bell curve
-    else
+        uᵢ₋₁[end,:] .= uᵢ₋₁[end,:] + [dom,0]
+        uᵢ₊₁[1,:] .= uᵢ₊₁[1,:] - [dom,0]
+    elseif Domain.btype == "CosineSineWave"
         dom = 2*pi; # FOR Cosine SineWave
+        uᵢ₋₁[end,:] .= uᵢ₋₁[end,:] + [dom,0]
+        uᵢ₊₁[1,:] .= uᵢ₊₁[1,:] - [dom,0]
     end
 
     ∑F = zeros(size(u, 1))
@@ -27,20 +40,14 @@ function PostCalcs1D(u, p)
     ψ = zeros(size(u, 1))
     Κ = zeros(size(u, 1))
 
-    uᵢ₊₁ = circshift(u,1)
-    uᵢ₋₁ = circshift(u,-1)
-
-    uᵢ₋₁[end,:] .= uᵢ₋₁[end,:] + [dom,0]
-    uᵢ₊₁[1,:] .= uᵢ₊₁[1,:] - [dom,0]
-
-    ∑F = diag((Fₛ⁺(u,uᵢ₊₁,uᵢ₋₁,kₘ,aₘ,CellMech.restoring_force))* transpose(τ(uᵢ₊₁,uᵢ₋₁)))
+    #∑F = diag((Fₛ⁺(u,uᵢ₊₁,uᵢ₋₁,kₘ,aₘ,CellMech.restoring_force))* transpose(τ(uᵢ₊₁,uᵢ₋₁)))
     #diag(((Fₛ⁺(u,uᵢ₊₁,uᵢ₋₁,kₛ,l₀,restoring_force)) + (Fₛ⁻(u,uᵢ₊₁,uᵢ₋₁,kₛ,l₀,restoring_force)) )* transpose(τ(uᵢ₊₁,uᵢ₋₁)))
-    density = (ρ(uᵢ₊₁, u).+ρ(u, uᵢ₋₁))./(2*Domain.m)
-    ψ = ∑F / (kₘ*aₘ)
-    Κ = κ(uᵢ₋₁,u,uᵢ₊₁)
-    vₙx = Vₙ(uᵢ₋₁,u,uᵢ₊₁,kfₘ,SimTime.δt,"2D")[:,1]
-    vₙy = Vₙ(uᵢ₋₁,u,uᵢ₊₁,kfₘ,SimTime.δt,"2D")[:,2]
-    vₙ = .√(vₙx.^2 + vₙy.^2)
+    density = 1 ./ (Domain.m .* diff(u[1,:]))
+    #ψ = ∑F / (kₘ*aₘ)
+    #Κ = κ(uᵢ₋₁,u,uᵢ₊₁)
+    #vₙx = Vₙ(uᵢ₋₁,u,uᵢ₊₁,kfₘ,SimTime.δt,"2D")[:,1]
+    #vₙy = Vₙ(uᵢ₋₁,u,uᵢ₊₁,kfₘ,SimTime.δt,"2D")[:,2]
+    #vₙ = .√(vₙx.^2 + vₙy.^2)
     
 
     return ∑F, vₙ, density, ψ, Κ
@@ -130,18 +137,23 @@ function postSimulation(sol, p, AllCellMech)
 
     for ii in 1:s
         Area[ii] = Ω(u[ii]) # area calculation
-        Cell_Count[ii] = size(u[ii],2)/Domain.m
         if Domain.domain_type == "2D"
+            Cell_Count[ii] = size(u[ii],2)/Domain.m
             Fnet, nV, den, stre, kap = PostCalcs2D(u[ii], p, AllCellMech[ii])
+            push!(∑F, Fnet)
+            push!(vₙ, nV)
+            push!(DENSITY, vec(den))
+            push!(ψ, stre)
+            push!(Κ, kap)
         else
-            Fnet, nV, den, stre, kap = PostCalcs1D(u[ii], p)
+            Cell_Count[ii] = (size(u[ii],2)-1)/Domain.m
+            Fnet, nV, den, stre, kap = PostCalcs1D(u[ii], p, AllCellMech[ii])
+            push!(∑F, Fnet)
+            push!(vₙ, nV)
+            push!(DENSITY, vec(den))
+            push!(ψ, stre)
+            push!(Κ, kap)
         end
-
-        push!(∑F, Fnet)
-        push!(vₙ, nV)
-        push!(DENSITY, den)
-        push!(ψ, stre)
-        push!(Κ, kap)
     end
 
     return SimResults_t(Domain.btype, sol.t[1:s], u[1:s], ∑F, DENSITY, vₙ, Area, ψ, Κ, Cell_Count)

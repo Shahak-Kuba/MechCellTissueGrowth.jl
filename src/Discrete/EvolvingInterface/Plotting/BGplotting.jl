@@ -8,22 +8,22 @@ function PlotOsteon_Simulation(sol, embedded_pos)
     fig = Figure(size=(800,800))
     ga = fig[1,1] = GridLayout()
     ax = CairoMakie.Axis(ga[1,1], xlabel=L"$x$ [μm]", ylabel=L"$y$ [μm]", xlabelsize = 22, xlabelvisible = false, ylabelvisible= false, ylabelsize = 22, aspect = 1, xticklabelsize = 18, yticklabelsize = 18, xticklabelsvisible=false, yticklabelsvisible=false )
-    colors = reverse(KubaPhD.greyscale_colors(size(sol.t, 1)))
+    colors = reverse(MechCellTissueGrowth.greyscale_colors(size(sol.t, 1)))
     
     for ii in axes(sol.t, 1)
         if ii == 1 || ii == size(sol.t, 1)
-            poly!(ax, KubaPhD.convert_coordinates_to_tuples(sol.u[ii]), color=colors[ii], strokecolor = :black, strokewidth = 2, joinstyle=:round,  stroke_depth_shift = +1e-3)
+            poly!(ax, MechCellTissueGrowth.convert_coordinates_to_tuples(sol.u[ii]), color=colors[ii], strokecolor = :black, strokewidth = 2, joinstyle=:round,  stroke_depth_shift = +1e-3)
         else
-            poly!(ax, KubaPhD.convert_coordinates_to_tuples(sol.u[ii]), color=colors[ii], strokecolor = :grey98, strokewidth = 1, joinstyle=:round,  stroke_depth_shift = +1e-3)
+            poly!(ax, MechCellTissueGrowth.convert_coordinates_to_tuples(sol.u[ii]), color=colors[ii], strokecolor = :grey98, strokewidth = 1, joinstyle=:round,  stroke_depth_shift = +1e-3)
         end
     end
-    poly!(ax, KubaPhD.convert_coordinates_to_tuples(sol.u[end]), color=colors[1], strokecolor = :black, strokewidth = 2, joinstyle=:round)
+    poly!(ax, MechCellTissueGrowth.convert_coordinates_to_tuples(sol.u[end]), color=colors[1], strokecolor = :black, strokewidth = 2, joinstyle=:round)
 
     for cell in embedded_pos
-        cell = KubaPhD.equidistant_normal_points_matrix(cell, 1.0, 15.0)
-        #CairoMakie.lines!(ax, cell[1,:], cell[2,:], linewidth=3, color=KubaPhD.ColorsCBfriendly[:Black], joinstyle=:round)
-        CairoMakie.poly!(ax, cell[1,:], cell[2,:], color=KubaPhD.ColorsCBfriendly[:Black], strokecolor=:black, strokewidth=2, joinstyle=:round, stroke_depth_shift = +1e-3)
-        CairoMakie.lines!(ax, cell[1,:], cell[2,:], linewidth=3, color=KubaPhD.ColorsCBfriendly[:Black], joinstyle=:round)
+        cell = MechCellTissueGrowth.equidistant_normal_points_matrix(cell, 1.0, 20.0)
+        #CairoMakie.lines!(ax, cell[1,:], cell[2,:], linewidth=3, color=MechCellTissueGrowth.ColorsCBfriendly[:Black], joinstyle=:round)
+        CairoMakie.poly!(ax, cell[1,:], cell[2,:], color=MechCellTissueGrowth.ColorsCBfriendly[:Black], strokecolor=:black, strokewidth=2, joinstyle=:round, stroke_depth_shift = +1e-3)
+        CairoMakie.lines!(ax, cell[1,:], cell[2,:], linewidth=3, color=MechCellTissueGrowth.ColorsCBfriendly[:Black], joinstyle=:round)
     end
     return fig
 end
@@ -43,7 +43,7 @@ function PlotOsteonSim!(ax, sol, embedded_pos)
     for (i,cell) in enumerate(embedded_pos)
         #println(i)
         cell = equidistant_normal_points_matrix(cell, 1.0, 18.0)
-        #CairoMakie.lines!(ax, cell[1,:], cell[2,:], linewidth=3, color=KubaPhD.ColorsCBfriendly[:Black], joinstyle=:round)
+        #CairoMakie.lines!(ax, cell[1,:], cell[2,:], linewidth=3, color=MechCellTissueGrowth.ColorsCBfriendly[:Black], joinstyle=:round)
         CairoMakie.poly!(ax, cell[1,:], cell[2,:], color=:black, strokecolor=:black, strokewidth=2, joinstyle=:round, stroke_depth_shift = +1e-3)
         CairoMakie.lines!(ax, cell[1,:], cell[2,:], linewidth=3, color=:black, joinstyle=:round)
     end
@@ -77,7 +77,7 @@ function PlotWallEmbedDensities(sol, embedded_pos, ξ_all, Exp_Ot)
     end
 
     CairoMakie.axislegend(data_ax, position = :rt,  labelsize = 24)
-    #CairoMakie.scatter!(data_ax, 0:size(ξ_all[:,1],1)+1,ones(size(0:size(ξ_all[:,1],1)+1)).*mean(total_ξ), color=KubaPhD.BlueRedColors[:MidBlue2], marker=:diamond, markersize=20, label="Total density")
+    #CairoMakie.scatter!(data_ax, 0:size(ξ_all[:,1],1)+1,ones(size(0:size(ξ_all[:,1],1)+1)).*mean(total_ξ), color=MechCellTissueGrowth.BlueRedColors[:MidBlue2], marker=:diamond, markersize=20, label="Total density")
 
     return fig1, fig2
 end

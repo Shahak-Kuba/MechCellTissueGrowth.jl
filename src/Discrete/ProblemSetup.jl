@@ -152,7 +152,7 @@ function SetupODEproblem(M, Domain, CellMech, SimTime, Prolif, Death, Embed, Pro
     #kₘ = CellMech.kₛ .* Domain.m
     #ηₘ = CellMech.η ./ Domain.m
     #kfₘ = CellMech.kf ./ Domain.m
-    u0 = u0SetUp(Domain.btype,Domain.R₀,M,Domain.dist_type,Domain.domain_type)
+    u0 = u0SetUp(Domain.btype,Domain.R₀,M,Domain.dist_type,Domain.domain_type; dir_to_img=Domain.dir_to_EXP_Image)
     p = (Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed)
     tspan = (0.0, SimTime.Tmax)
     return ODEProblem(Growth_ODE!,u0,tspan,p), p
@@ -216,9 +216,43 @@ function SetupFBODEproblem(FB_IC, M, Domain, CellMech, SimTime, Prolif, Death, E
     q0_der = FB_IC.q0_der
     L0 = FB_IC.L0
     
-    x0 = generate_discrete_IC_from_density_profile(q0, q0_der, M, L0, 0.01)
+    x0 = generate_discrete_IC_from_density_profile(q0, q0_der, M, L0, 0.001)
+    #println("x0 = ", x0)
     u0 = ElasticMatrix([x0'; zeros(1, length(x0))])
     p = (Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed)
     tspan = (0.0, SimTime.Tmax)
     return ODEProblem(FB_ODE!,u0,tspan,p), p
+end
+
+function SetupFBODEproblem_given_IC(IC::Vector{Float64}, M, Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed)
+
+    u0 = ElasticMatrix(zeros(2,M+1))
+    u0[1,2:end] = IC;
+    p = (Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed)
+    tspan = (0.0, SimTime.Tmax)
+    return ODEProblem(FB_ODE!,u0,tspan,p), p
+end
+
+## For fixed boundary problem
+
+function SetupFixedBoundaryODEproblem(FB_IC, M, Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed)
+    q0 = FB_IC.q0
+    q0_der = FB_IC.q0_der
+    L0 = FB_IC.L0
+    
+    x0 = generate_discrete_IC_from_density_profile(q0, q0_der, M, L0, 0.001)
+    #println("x0 = ", x0)
+    u0 = ElasticMatrix([x0'; zeros(1, length(x0))])
+    p = (Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed)
+    tspan = (0.0, SimTime.Tmax)
+    return ODEProblem(FixedBoundary_ODE!,u0,tspan,p), p
+end
+
+function SetupFixedBoundaryODEproblem_given_IC(IC::Vector{Float64}, M, Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed)
+
+    u0 = ElasticMatrix(zeros(2,M+1))
+    u0[1,2:end] = IC;
+    p = (Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed)
+    tspan = (0.0, SimTime.Tmax)
+    return ODEProblem(FixedBoundary_ODE!,u0,tspan,p), p
 end

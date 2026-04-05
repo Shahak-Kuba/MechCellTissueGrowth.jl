@@ -8,12 +8,12 @@ BatchSize = 2
 Domain = MCTG.DomainProperties_t(N=45, R₀=60.0, btype="PerturbedCircle", m = 5)
 
 # Cell Mechanics
-CellMech = MCTG.CellMechProperties_t(kₛ=5, growth_dir="inward", kf = 35)
+CellMech = MCTG.CellMechProperties_t(kₛ=5, kf = 35)
 
 # Cell Behaviours
 Prolif = MCTG.CellEvent_t()
-Death = MCTG.CellEvent_t(true, 0.0001, "Constant")
-Embed = MCTG.CellEvent_t(true, 0.000625*CellMech.kf, "Constant")
+Death = MCTG.CellEvent_t(flag = true, rate = 0.0001)
+Embed = MCTG.CellEvent_t(flag = true, rate = 0.000625*CellMech.kf)
 ProlifEmbed = MCTG.CellEvent_t()
 # Simulation time parameters
 #SimTime = MCTG.SimTime_t(Tmax=12, event_trigger="", event_δt=8.0, event_length=2.0)

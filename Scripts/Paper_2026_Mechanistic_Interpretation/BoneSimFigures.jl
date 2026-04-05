@@ -36,11 +36,11 @@ for iteration in 1: size(all_solutions,1)
         N_embed_all[n+1:end, iteration] .= NaN
     end
 end
-idx = 222
+idx = 1
 sol = all_solutions[idx];
 embedded_pos = all_embedded_cell_pos[idx];
 fig7_1, fig7_2 = MCTG.PlotWallEmbedDensities(sol, embedded_pos, ξ_all, 0.000625)
-display(fig7_2)
+display(fig7_1)
 
 # Plot 8: Bone formation WTh_asymmetry_ratio
 results = MCTG.analyse_wallThickness_density(all_solutions, all_embedded_cell_pos);
