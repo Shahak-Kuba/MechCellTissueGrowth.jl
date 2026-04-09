@@ -16,7 +16,7 @@ using CairoMakie
 
 # Case: l₁(0) = l₂(0) = l₀
 f = Figure(size=(1200,600))
-ax = Axis(f[1,1], aspect=1, xlabel=L"\ell(0)", ylabel=L"\text{Coefficient values}", title=L"\text{Exact solution for } x_{1}(t)", limits=(-0.5,10.5, -5, 5))
+ax = Axis(f[1,1], aspect=1, xlabel=L"\ell(0)", ylabel=L"\text{Coefficient values}", title=L"\text{Exact solution for } \ell_{1}(t)", limits=(-0.5,10.5, -5, 5))
 # shading 
 points = [Point2f(5, -11), Point2f(5, 11), Point2f(-2, 11), Point2f(-2, -11)]
 poly!(ax, points, color = :green, alpha = 0.1)
@@ -27,7 +27,7 @@ lines!(ax, l₀, C₁(a, λ₁, λ₂, l₀, l₀), linewidth=3, label=L"C_{1}")
 lines!(ax, l₀, C₂(a, λ₁, λ₂, l₀, l₀), linewidth=3, label=L"C_{2}")
 axislegend(ax,position=:lt)
 
-ax2 = Axis(f[1,2], aspect=1, xlabel=L"\ell(0)", title=L"\text{Exact solution for } x_{2}(t)", limits=(-0.5,10.5, -5, 5))
+ax2 = Axis(f[1,2], aspect=1, xlabel=L"\ell(0)", title=L"\text{Exact solution for } \ell_{2}(t)", limits=(-0.5,10.5, -5, 5))
 # shading 
 points = [Point2f(5, -11), Point2f(5, 11), Point2f(-2, 11), Point2f(-2, -11)]
 poly!(ax2, points, color = :green, alpha = 0.1)
@@ -45,59 +45,94 @@ save("exact_sol_coefficients_uniform.png", f)
 a_diff = 2
 # Case: l₁(0) < a
 f2 = Figure(size=(1800,1300))
-ax = Axis(f2[1,1], aspect=1, xlabel=L"\ell_{2}(0)", ylabel="Coefficients", title=L"\ell_{1}(0) = a - \delta a", limits=(-1,11, -10, 10), xticklabelsvisible=false)
-lines!(ax, l₀, (1 + λ₁).*C₁(a, λ₁, λ₂, (a-a_diff).*ones(size(l₀)), l₀), linewidth=3, label=L"C_{1}")
-lines!(ax, l₀, (1 + λ₂).*C₂(a, λ₁, λ₂, (a-a_diff).*ones(size(l₀)), l₀), linewidth=3, label=L"C_{2}")
+ax = Axis(f2[1,1], aspect=1, xlabel=L"\ell_{2}(0)", ylabel=L"\text{Coefficients}", title=L"\ell_{1}(0) = a - \delta a", limits=(-1,11, -5, 5), xticklabelsvisible=false)
+lines!(ax, l₀, (1 + λ₁).*C₁(a, λ₁, λ₂, (a-a_diff).*ones(size(l₀)), l₀), linewidth=3, label=L"(1+\lambda_1)C_{1}")
+lines!(ax, l₀, (1 + λ₂).*C₂(a, λ₁, λ₂, (a-a_diff).*ones(size(l₀)), l₀), linewidth=3, label=L"(1+\lambda_2)C_{2}")
 axislegend(ax,position=:lt)
 # Case: l₁(0) = a
-ax = Axis(f2[1,2], aspect=1, xlabel=L"\ell_{2}(0)", title=L"\ell_{1}(0) = a", limits=(-1,11, -10, 10), xticklabelsvisible=false, yticklabelsvisible=false)
+ax = Axis(f2[1,2], aspect=1, xlabel=L"\ell_{2}(0)", title=L"\ell_{1}(0) = a", limits=(-1,11, -5, 5), xticklabelsvisible=false, yticklabelsvisible=false)
 lines!(ax, l₀, (1 + λ₁).*C₁(a, λ₁, λ₂, a.*ones(size(l₀)), l₀), linewidth=3, label=L"C_{1}")
 lines!(ax, l₀, (1 + λ₂).*C₂(a, λ₁, λ₂, a.*ones(size(l₀)), l₀), linewidth=3, label=L"C_{2}")
 # Case: l₁(0) > a
-ax = Axis(f2[1,3], aspect=1, xlabel=L"\ell_{2}(0)", title=L"\ell_{1}(0) = a + \delta a", limits=(-1,11, -10, 10), xticklabelsvisible=false, yticklabelsvisible=false)
+ax = Axis(f2[1,3], aspect=1, xlabel=L"\ell_{2}(0)", title=L"\ell_{1}(0) = a + \delta a", limits=(-1,11, -5, 5), xticklabelsvisible=false, yticklabelsvisible=false)
 lines!(ax, l₀, (1 + λ₁).*C₁(a, λ₁, λ₂, (a+a_diff).*ones(size(l₀)), l₀), linewidth=3, label=L"C_{1}")
 lines!(ax, l₀, (1 + λ₂).*C₂(a, λ₁, λ₂, (a+a_diff).*ones(size(l₀)), l₀), linewidth=3, label=L"C_{2}")
 # Case: l₂(0) < a
-ax = Axis(f2[2,1], aspect=1, xlabel=L"\ell_{1}(0)", ylabel="Coefficients", title=L"\ell_{2}(0) = a - \delta a", limits=(-1,11, -10, 10))
+ax = Axis(f2[2,1], aspect=1, xlabel=L"\ell_{1}(0)", ylabel=L"\text{Coefficients}", title=L"\ell_{2}(0) = a - \delta a", limits=(-1,11, -5, 5))
 lines!(ax, l₀, (1 + λ₁).*C₁(a, λ₁, λ₂, l₀, (a-a_diff).*ones(size(l₀))), linewidth=3, label=L"C_{1}")
 lines!(ax, l₀, (1 + λ₂).*C₂(a, λ₁, λ₂, l₀, (a-a_diff).*ones(size(l₀))), linewidth=3, label=L"C_{2}")
 # Case: l₂(0) = a
-ax = Axis(f2[2,2], aspect=1, xlabel=L"\ell_{1}(0)", title=L"\ell_{2}(0) = a", limits=(-1,11, -10, 10), yticklabelsvisible=false)
+ax = Axis(f2[2,2], aspect=1, xlabel=L"\ell_{1}(0)", title=L"\ell_{2}(0) = a", limits=(-1,11, -5, 5), yticklabelsvisible=false)
 lines!(ax, l₀, (1 + λ₁).*C₁(a, λ₁, λ₂, l₀, a.*ones(size(l₀))), linewidth=3, label=L"C_{1}")
 lines!(ax, l₀, (1 + λ₂).*C₂(a, λ₁, λ₂, l₀, a.*ones(size(l₀))), linewidth=3, label=L"C_{2}")
 # Case: l₂(0) > a
-ax = Axis(f2[2,3], aspect=1, xlabel=L"\ell_{1}(0)", title=L"\ell_{2}(0) = a + \delta a", limits=(-1,11, -10, 10), yticklabelsvisible=false)
+ax = Axis(f2[2,3], aspect=1, xlabel=L"\ell_{1}(0)", title=L"\ell_{2}(0) = a + \delta a", limits=(-1,11, -5, 5), yticklabelsvisible=false)
 lines!(ax, l₀, (1 + λ₁).*C₁(a, λ₁, λ₂, l₀, (a+a_diff).*ones(size(l₀))), linewidth=3, label=L"C_{1}")
 lines!(ax, l₀, (1 + λ₂).*C₂(a, λ₁, λ₂, l₀, (a+a_diff).*ones(size(l₀))), linewidth=3, label=L"C_{2}")
 
+display(f2)
+save("exact_sol_l2_coefficients_vary.png", f2)
+
+
+a_diff = 2
+# Case: l₁(0) < a
+f3 = Figure(size=(1800,1300))
+ax = Axis(f3[1,1], aspect=1, xlabel=L"\ell_{2}(0)", ylabel=L"\text{Coefficients}", title=L"\ell_{1}(0) = a - \delta a", limits=(-1,11, -5, 5), xticklabelsvisible=false)
+lines!(ax, l₀, C₁(a, λ₁, λ₂, (a-a_diff).*ones(size(l₀)), l₀), linewidth=3, label=L"C_{1}")
+lines!(ax, l₀, C₂(a, λ₁, λ₂, (a-a_diff).*ones(size(l₀)), l₀), linewidth=3, label=L"C_{2}")
+axislegend(ax,position=:lt)
+# Case: l₁(0) = a
+ax = Axis(f3[1,2], aspect=1, xlabel=L"\ell_{2}(0)", title=L"\ell_{1}(0) = a", limits=(-1,11, -5, 5), xticklabelsvisible=false, yticklabelsvisible=false)
+lines!(ax, l₀, C₁(a, λ₁, λ₂, a.*ones(size(l₀)), l₀), linewidth=3, label=L"C_{1}")
+lines!(ax, l₀, C₂(a, λ₁, λ₂, a.*ones(size(l₀)), l₀), linewidth=3, label=L"C_{2}")
+# Case: l₁(0) > a
+ax = Axis(f3[1,3], aspect=1, xlabel=L"\ell_{2}(0)", title=L"\ell_{1}(0) = a + \delta a", limits=(-1,11, -5, 5), xticklabelsvisible=false, yticklabelsvisible=false)
+lines!(ax, l₀, C₁(a, λ₁, λ₂, (a+a_diff).*ones(size(l₀)), l₀), linewidth=3, label=L"C_{1}")
+lines!(ax, l₀, C₂(a, λ₁, λ₂, (a+a_diff).*ones(size(l₀)), l₀), linewidth=3, label=L"C_{2}")
+# Case: l₂(0) < a
+ax = Axis(f3[2,1], aspect=1, xlabel=L"\ell_{1}(0)", ylabel=L"\text{Coefficients}", title=L"\ell_{2}(0) = a - \delta a", limits=(-1,11, -5, 5))
+lines!(ax, l₀, C₁(a, λ₁, λ₂, l₀, (a-a_diff).*ones(size(l₀))), linewidth=3, label=L"C_{1}")
+lines!(ax, l₀, C₂(a, λ₁, λ₂, l₀, (a-a_diff).*ones(size(l₀))), linewidth=3, label=L"C_{2}")
+# Case: l₂(0) = a
+ax = Axis(f3[2,2], aspect=1, xlabel=L"\ell_{1}(0)", title=L"\ell_{2}(0) = a", limits=(-1,11, -5, 5), yticklabelsvisible=false)
+lines!(ax, l₀, C₁(a, λ₁, λ₂, l₀, a.*ones(size(l₀))), linewidth=3, label=L"C_{1}")
+lines!(ax, l₀, C₂(a, λ₁, λ₂, l₀, a.*ones(size(l₀))), linewidth=3, label=L"C_{2}")
+# Case: l₂(0) > a
+ax = Axis(f3[2,3], aspect=1, xlabel=L"\ell_{1}(0)", title=L"\ell_{2}(0) = a + \delta a", limits=(-1,11, -5, 5), yticklabelsvisible=false)
+lines!(ax, l₀, C₁(a, λ₁, λ₂, l₀, (a+a_diff).*ones(size(l₀))), linewidth=3, label=L"C_{1}")
+lines!(ax, l₀, C₂(a, λ₁, λ₂, l₀, (a+a_diff).*ones(size(l₀))), linewidth=3, label=L"C_{2}")
+
+display(f3)
+save("exact_sol_l1_coefficients_vary.png", f3)
+
+"""
 f3 = Figure(size=(1200,600))
-δa_array = [-4, -2, -1, 1, 2, 4]
+δa_array = [-4, -2, 0, 2, 4]
 ax = Axis(f3[1,1], aspect=1, xlabel=L"\ell_{2}(0)", ylabel=L"C_{1}", title=L"\ell_{1}(0) - \delta a", limits=(-1,11, -10, 10))
 for δa in δa_array
     lines!(ax, l₀, (1 + λ₁).*C₁(a, λ₁, λ₂, (a-δa).*ones(size(l₀)), l₀), linewidth=3, label="δa = $δa")
 end
+axislegend(ax,position=:lt)
 ax = Axis(f3[1,2], aspect=1, xlabel=L"\ell_{2}(0)", ylabel=L"C_{2}", title=L"\ell_{1}(0) - \delta a", limits=(-1,11, -10, 10))
 for δa in δa_array
     lines!(ax, l₀, (1 + λ₂).*C₂(a, λ₁, λ₂, (a-δa).*ones(size(l₀)), l₀), linewidth=3, label="δa = $δa")
 end
 
+display(f3)
+
 f4 = Figure(size=(1200,600))
 ax = Axis(f4[1,1], aspect=1, xlabel=L"\ell_{1}(0)", ylabel=L"C_{1}", title=L"\ell_{2}(0) - \delta a", limits=(-1,11, -10, 10))
 for δa in δa_array
-    lines!(ax, l₀, (1 + λ₁).*C₁(a, λ₁, λ₂, l₀, (a-δa).*ones(size(l₀))), linewidth=3, label="δa = $δa")
+    lines!(ax, l₀, (1 + λ₁).*C₁(a, λ₁, λ₂, l₀, (a-δa).*ones(size(l₀))), linewidth=3, label=L"\delta a = ")
 end
+axislegend(ax,position=:lt)
 ax = Axis(f4[1,2], aspect=1, xlabel=L"\ell_{1}(0)", ylabel=L"C_{2}", title=L"\ell_{2}(0) - \delta a", limits=(-1,11, -10, 10))
 for δa in δa_array
     lines!(ax, l₀, (1 + λ₂).*C₂(a, λ₁, λ₂, l₀, (a-δa).*ones(size(l₀))), linewidth=3, label="δa = $δa")
 end
 
-display(f)
-display(f2)
-display(f3)
 display(f4)
-
-save("exact_sol_coefficients_uniform.png", f)
-save("exact_sol_coefficients_vary.png", f2)
+"""
 
 
 import MechCellTissueGrowth as MCTG
@@ -142,6 +177,6 @@ function compare_exact_discrete(k, a, η, l₁, l₂)
     return F
 end
 
-k = 2; a = 5.0; η = 1; l₁ = 8.0; l₂ = 5.0;
+k = 2; a = 5.0; η = 1; l₁ = 6.0; l₂ = 6.0;
 F = compare_exact_discrete(k, a, η, l₁, l₂)
 save("Exact_vs_discrete_sol_$l₁"*"_$l₂.png", F)
