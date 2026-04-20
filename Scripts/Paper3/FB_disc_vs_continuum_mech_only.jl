@@ -4,16 +4,17 @@ using QuadGK
 using LinearAlgebra
 
 # setting domain size
-L0 = 30.0;
+L0 = 10.0;
+q₀ = 1.5; 
 
 # discrete model Params
-CellMech = MCTG.CellMechProperties_t(kₛ=15, kf = 0, a = 1.0)
+CellMech = MCTG.CellMechProperties_t(kₛ=15, kf = 0, a = 1.0, restoring_force="hookean")
 Prolif = MCTG.CellEvent_t()
 Death = MCTG.CellEvent_t()
 Embed = MCTG.CellEvent_t()
 ProlifEmbed = MCTG.CellEvent_t()
-SimTime = MCTG.SimTime_t(Tmax=100, δt=0.0001, event_δt=0.0001)
-FB_IC = MCTG.FB_IC_t(q0 = x -> 1.5, q0_der = x -> 0.0, L0 = L0)
+SimTime = MCTG.SimTime_t(Tmax=50, δt=0.0001, event_δt=0.0001)
+FB_IC = MCTG.FB_IC_t(q0 = x -> q₀, q0_der = x -> 0.0, L0 = L0)
 NumSaveTimePoints = 1001
 
 m_vals = [1,2,5,10]
@@ -25,7 +26,7 @@ t_disc = []
 
 for m_value in m_vals
     # discrete model Params
-    Domain = MCTG.DomainProperties_t(N=45, m = m_value, domain_type="1D")
+    Domain = MCTG.DomainProperties_t(N=15, m = m_value, domain_type="1D")
     # run discrete simulation
     sol_disc = MCTG.FreeBoundarySimulation(FB_IC, Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed, 1, NumSaveTimePoints);
     push!(all_disc_solutions, sol_disc)
@@ -39,9 +40,12 @@ for m_value in m_vals
 end
 
 
-# solving continuum model
+# Solving PDE
 # Parameters
-k = CellMech.kₛ; η = CellMech.η; α = k/η; a = CellMech.a; L0 = L0; N = 1001;
+k = CellMech.kₛ; η = CellMech.η; α = k/η; a = CellMech.a; L0 = L0; N = 1001; Δx = 1/(N-1); 
+N_IC = Int(L0 * q₀); rBC=:free; 
+tspan = (0.0, SimTime.Tmax);
+
 # Force and Diffusivity functions (Nonlinear spring model)
 Ffunc = ρ -> k * (1/ρ - a)
 Dfunc = ρ -> α / ρ^2
@@ -49,48 +53,37 @@ Dfunc = ρ -> α / ρ^2
 Pfunc = ρ -> 0.0
 Afunc = ρ -> 0.0
 
-all_cont_solutions = []
+# solving continuum model without correction term Baker et al. 2019
+p = MCTG.FBParams(α=α, η=η, k=k, a=a, L0=L0, N=N, rBC=:free, lBC=:fixed, F=Ffunc, D=Dfunc, P=Pfunc, A=Afunc)
+y0 = MCTG.make_initial_condition_FB(p.N; U0fun = q0_func, L0=p.L0)
+# solve PDE
+prob = ODEProblem(MCTG.rhs_Baker!, y0, tspan, p)
+sol_Baker = solve(prob, Rodas5P(), saveat=vcat([0.0:0.1:tspan[2]]...))
 
-m_vals_cont = [1000]
-for m_value in m_vals_cont
-    p = MCTG.FBParams(α=α, η=η, k=k, a=a, L0=L0, N=N, rBC=:free, lBC=:fixed, F=Ffunc, D=Dfunc, P=Pfunc, A=Afunc, m=m_value)
-    q0_func = x -> 1.5 #* cos(z*π/2) + 1.0 #2.0
-    y0 = MCTG.make_initial_condition_FB(p.N; U0fun = q0_func, L0=p.L0)
-    tspan = (0.0, SimTime.Tmax)
-    # solve PDE
-    prob = ODEProblem(MCTG.rhs!, y0, tspan, p)
-    #sol_cont = solve(prob, QNDF(); reltol=1e-6, abstol=1e-8, saveat=vcat([0.0:0.01:SimTime.Tmax]...));
-    sol_cont = solve(prob, Rodas5P(), saveat=vcat([0.0:0.1:SimTime.Tmax]...));
-    push!(all_cont_solutions, sol_cont)
-end
+# solving continuum model with correction term
+p = MCTG.FBParams_w_correction(α, k, a, η, Δx, L0, N, N_IC, q₀, rBC, Ffunc, Dfunc, Pfunc, Afunc)
+y0 = MCTG.make_initial_condition_FB(p.N; U0fun = q0_func, L0=p.L0)
+# solve PDE
+prob = ODEProblem(MCTG.rhs_with_correction!, y0, tspan, p)
+sol = solve(prob, Rodas5P(), saveat=vcat([0.0:0.1:tspan[2]]...))
 
 # plotting L(t) for discrete and continuum models
-f = Figure(size=(1400,1200));
-ax = Axis(f[1,1], aspect=1, xlabel=L"$t$", ylabel=L"$L(t)$", xlabelsize=32, ylabelsize=32, xticklabelsize=24, yticklabelsize=24, limits=(0,100,30,45));
-# continuum solution for L(t)
-L_cont = []
-for ii in eachindex(all_cont_solutions)
-    L_cont = [all_cont_solutions[ii].u[i][end] for i in eachindex(all_cont_solutions[ii].t)]
-    if ii == 1
-        lines!(ax, all_cont_solutions[ii].t, L_cont, label="Continuum", linewidth=3);
-    else
-        lines!(ax, all_cont_solutions[ii].t, L_cont, linewidth=3);
-    end
-end
+f = Figure(size=(1300,800));
+ax = Axis(f[1,1], aspect=1, xlabel=L"$t$", ylabel=L"$L(t)$", xlabelsize=32, ylabelsize=32, xticklabelsize=24, yticklabelsize=24, limits=(-1,51,9,16));
+L_cont = [sol_Baker.u[i][end] for i in eachindex(sol_Baker.t)]
+lines!(ax, sol_Baker.t, L_cont, label="Baker et al. 2019", linewidth=3);
+# continuum solution for L(t) with correction term
+L_cont = [sol.u[i][end] for i in eachindex(sol.t)]
+lines!(ax, sol.t, L_cont, label="Continuum w/ correction", linewidth=3, color = :black);
 # discrete solution for L(t)
 clrs = [:red, :green, :orange, :purple]
 for ii in eachindex(all_disc_solutions)
-    scatter!(ax, all_disc_solutions[ii].t[1:100:end], all_disc_solutions_boundary[ii][1:100:end], label="m=$(m_vals[ii])", markersize=15, color=clrs[ii]);
+    scatter!(ax, all_disc_solutions[ii].t[1:100:end], all_disc_solutions_boundary[ii][1:100:end], label="Discrete m=$(m_vals[ii])", markersize=15, color=clrs[ii]);
     scatter!(ax, all_disc_solutions[ii].t[end], all_disc_solutions_boundary[ii][end], markersize=15, color=clrs[ii]);
 end
-axislegend(ax, position=:rb)
-# Plot L2 norm comparison
-ax2 = Axis(f[1,2], aspect=1, xlabel=L"$t$", ylabel=L"$||\hat{L}(t) - L^{(m)}(t)||_2$", xlabelsize=32, ylabelsize=32, xticklabelsize=24, yticklabelsize=24)
-for ii in 1:length(all_disc_solutions)
-    L2_norm = norm.(L_cont .- all_disc_solutions_boundary[ii])
-    lines!(ax2, t_disc[ii], L2_norm, label="m=$(m_vals[ii])", linewidth=3, color=clrs[ii])
-end
+Legend(f[1,2], ax)
 display(f)
+
 
 
 """
