@@ -16,6 +16,23 @@
     m::Int = 100 
 end
 
+struct FBParams_w_correction{TF, TD, TP, TA}
+    α::Float64
+    k::Float64
+    a::Float64
+    η::Float64
+    Δx::Float64
+    L0::Float64
+    N::Int64
+    Ncells::Int64
+    q₀::Float64
+    rBC::Symbol
+    F::TF
+    D::TD
+    P::TP
+    A::TA
+end
+
 # ODE problem (Spatially discretised)
 function rhs!(du, u, p::FBParams, t)
     α, k, a, η, Δx, N = p.α, p.k, p.a, p.η, p.Δx, p.N
@@ -110,9 +127,10 @@ function rhs!(du, u, p::FBParams, t)
 
     du[N + 1] = dLdt
 
+    return nothing
 end
 
-function rhs2!(du, u, p::FBParams, t)
+function rhs_Baker!(du, u, p::FBParams, t)
     α, k, a, η, Δx, N = p.α, p.k, p.a, p.η, p.Δx, p.N
     right_BC = p.rBC
     left_BC = p.lBC
@@ -206,6 +224,111 @@ function rhs2!(du, u, p::FBParams, t)
     du[N + 1] = dLdt
 
 end
+
+function rhs_with_correction!(du, u, p::FBParams_w_correction, t)
+    α, k, a, η, Δx, N = p.α, p.k, p.a, p.η, p.Δx, p.N
+    N_IC = p.Ncells
+    q₀    = p.q₀
+    right_BC = p.rBC
+
+    F = p.F
+    D = p.D
+    P = p.P
+    A = p.A
+
+    diffusivity_method = "arithmetic"
+
+    #println("t = $t")
+
+    # Unpack state
+    q = u[1:end-1]
+    L = u[end]
+
+    # Initialise before conditional so Julia can infer concrete types
+    q_right_ghost = 0.0
+    dLdt          = 0.0
+
+    if right_BC == :fixed
+        q_right_ghost = q[N-1]
+        dLdt          = 0.0
+
+    elseif right_BC == :free
+        mF_q_term = (2 / (N_IC * η)) * (k * (1/q₀ - a)) *
+                    sum(exp((-k * (2s - 1)^2 * π^2 * t) / (4 * N_IC^2 * η))
+                        for s in 1:50)
+
+        q_right_ghost = 2q[N] - q[N-1]#q[N-1] + ((4 * Δx * q[N] * L) / D(q[N])) * mF_q_term
+        dLdt          = - mF_q_term - (D(q[N]) / (2 * q[N] * L)) * ((q_right_ghost - q[N]) / Δx)
+    end
+
+    for ii in 1:N
+        if ii == 1
+            q_left_ghost = q[2]
+
+            if diffusivity_method == "arithmetic"
+                Dm  = D(q_left_ghost)
+                Di  = D(q[ii])
+                Dp  = D(q[ii+1])
+                Dhp = 0.5 * (Di + Dp)
+                Dhm = 0.5 * (Di + Dm)
+            elseif diffusivity_method == "harmonic"
+                Dhp = (2 * D(q[ii]) * D(q[ii+1])) / (D(q[ii]) + D(q[ii+1]))
+                Dhm = (2 * D(q[ii]) * D(q_left_ghost)) / (D(q[ii]) + D(q_left_ghost))
+            else
+                error("Diffusivity method not recognised")
+            end
+
+            du[ii] = (1/L^2) * (1/Δx^2) *
+                     (Dhp * (q[ii+1] - q[ii]) - Dhm * (q[ii] - q_left_ghost)) +
+                     q[ii] * (P(1/q[ii]) - A(1/q[ii]))
+
+        elseif ii == N
+            if diffusivity_method == "arithmetic"
+                Dm  = D(q[ii-1])
+                Di  = D(q[ii])
+                Dp  = D(q_right_ghost)
+                Dhp = 0.5 * (Di + Dp)
+                Dhm = 0.5 * (Di + Dm)
+            elseif diffusivity_method == "harmonic"
+                Dhp = (2 * D(q[ii]) * D(q_right_ghost)) / (D(q[ii]) + D(q_right_ghost))
+                Dhm = (2 * D(q[ii]) * D(q[ii-1]))      / (D(q[ii]) + D(q[ii-1]))
+            else
+                error("Diffusivity method not recognised")
+            end
+
+            du[ii] = (1/L) * dLdt * ((q[ii] - q[ii-1]) / Δx) +
+                     (1/L^2) * (1/Δx^2) *
+                     (Dhp * (q_right_ghost - q[ii]) - Dhm * (q[ii] - q[ii-1])) +
+                     q[ii] * (P(1/q[ii]) - A(1/q[ii]))
+
+        else
+            z_i = (ii - 1) * Δx
+
+            if diffusivity_method == "arithmetic"
+                Dm  = D(q[ii-1])
+                Di  = D(q[ii])
+                Dp  = D(q[ii+1])
+                Dhp = 0.5 * (Di + Dp)
+                Dhm = 0.5 * (Di + Dm)
+            elseif diffusivity_method == "harmonic"
+                Dhp = (2 * D(q[ii]) * D(q[ii+1])) / (D(q[ii]) + D(q[ii+1]))
+                Dhm = (2 * D(q[ii]) * D(q[ii-1])) / (D(q[ii]) + D(q[ii-1]))
+            else
+                error("Diffusivity method not recognised")
+            end
+
+            du[ii] = (z_i / L) * dLdt * ((q[ii] - q[ii-1]) / Δx) +
+                     (1/L^2) * (1/Δx^2) *
+                     (Dhp * (q[ii+1] - q[ii]) - Dhm * (q[ii] - q[ii-1])) +
+                     q[ii] * (P(1/q[ii]) - A(1/q[ii]))
+        end
+    end
+
+    du[N+1] = dLdt
+
+    return nothing  # explicit return so the function type is Nothing, not Any
+end
+
 
 # Build an initial condition U0(z) on the grid
 function make_initial_condition_FB(N; U0fun = z -> 1.0 , L0 = 5.0)
