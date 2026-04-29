@@ -2,7 +2,7 @@
 
 julia_version = "1.10.5"
 manifest_format = "2.0"
-project_hash = "4385e008789fd74342a7774949e199d219ab8035"
+project_hash = "1038b1053dcb783fee81e0b2d275d5769231f62f"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "f7304359109c768cf32dc5fa2d371565bb63b68a"
@@ -1549,6 +1549,12 @@ version = "2.10.3+0"
 git-tree-sha1 = "dda21b8cbd6a6c40d9d02a73230f9d70fed6918c"
 uuid = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 version = "1.4.0"
+
+[[deps.LambertW]]
+deps = ["IrrationalConstants"]
+git-tree-sha1 = "c6cd4fe119e21ebb1ca8adfaf32c989465c8d920"
+uuid = "984bce1d-4616-540c-a9ee-88d1112d94c9"
+version = "1.0.0"
 
 [[deps.Latexify]]
 deps = ["Format", "Ghostscript_jll", "InteractiveUtils", "LaTeXStrings", "MacroTools", "Markdown", "OrderedCollections", "Requires"]
