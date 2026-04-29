@@ -53,6 +53,8 @@ Dfunc = ρ -> α / ρ^2
 Pfunc = ρ -> 0.0
 Afunc = ρ -> 0.0
 
+q0_func = z -> q₀ 
+
 # solving continuum model without correction term Baker et al. 2019
 p = MCTG.FBParams(α=α, η=η, k=k, a=a, L0=L0, N=N, rBC=:free, lBC=:fixed, F=Ffunc, D=Dfunc, P=Pfunc, A=Afunc)
 y0 = MCTG.make_initial_condition_FB(p.N; U0fun = q0_func, L0=p.L0)
@@ -98,11 +100,11 @@ display(f1)
 """
 
 f2 = Figure(size=(600,600));
-ax = Axis(f2[1,1], aspect=1, xlabel=L"$x$", ylabel=L"$q(x,t)$", title = L"$t = 100$", xlabelsize=32, ylabelsize=32, xticklabelsize=24, yticklabelsize=24, limits=(0,45,0.95,1.1));
-t_idx = 1001;
+ax = Axis(f2[1,1], aspect=1, xlabel=L"$x$", ylabel=L"$q(x,t)$", title = L"$t = 25$", xlabelsize=32, ylabelsize=32, xticklabelsize=24, yticklabelsize=24, limits=(0,15,0.99,1.1));
+t_idx = 251;
 # continuum solution for L(t)
-q_cont = all_cont_solutions[1].u[t_idx][1:end-1] ;
-x = collect(all_cont_solutions[1].u[t_idx][end] .* range(0, stop=1.0, length=N));
+q_cont = sol.u[t_idx][1:end-1] ;
+x = collect(sol.u[t_idx][end] .* range(0, stop=1.0, length=p.N));
 lines!(ax, x, q_cont, label="Continuum", linewidth=5);
 # discrete solution for L(t)
 clrs = [:red, :green, :orange, :purple];
@@ -112,8 +114,6 @@ for ii in eachindex(all_disc_solutions)
     x[2:end] = x[2:end] .+ cumsum(dx[2:end])
     stairs!(ax, x, all_disc_solutions[ii].Density[t_idx], label="m=$(m_vals[ii])", linewidth=2, color=clrs[ii]);
 end
-#axislegend(ax, position=:rt)
-
 display(f2)
 
 f3 = Figure(size=(600,600));
