@@ -34,7 +34,7 @@ struct FBParams_w_correction{TF, TD, TP, TA}
 end
 
 # ODE problem (Spatially discretised)
-function rhs!(du, u, p::FBParams, t)
+function rhs_in_ρ!(du, u, p::FBParams, t)
     α, k, a, η, Δx, N = p.α, p.k, p.a, p.η, p.Δx, p.N
     right_BC = p.rBC
     left_BC = p.lBC
@@ -44,7 +44,6 @@ function rhs!(du, u, p::FBParams, t)
     P = p.P
     A = p.A
 
-    m = p.m
 
     diffusivity_method = "arithmetic"
 
@@ -59,20 +58,19 @@ function rhs!(du, u, p::FBParams, t)
         dLdt = 0.0
     elseif right_BC == :free
         #m = 100
-        x = range(0, stop=1.0, length=p.N)
-        itp = Interpolations.linear_interpolation(x, P.(q));
-        g_integral= quadgk(x -> itp(x), 0, 1)[1]
-        G = g_integral * L
+        #x = range(0, stop=1.0, length=p.N)
+        #itp = Interpolations.linear_interpolation(x, P.(q));
+        #g_integral= quadgk(x -> itp(x), 0, 1)[1]
+        #G = g_integral * L
         #q_right_ghost = q[N-1] + ((4 * Δx * q[N] * L) / (η * D(q[N]))) * F(q[N]) # ghost node with \mathcal{O}(Δx^2) accuracy
-        q_right_ghost = q[N-1] + ((4 * Δx * q[N] * L) / (D(q[N]))) * ( (m/η)*F(q[N]) + G )
-        dLdt = (-(m/η)* F(q[N])) - (D(q[N])/(2 * q[N] * L))*((q_right_ghost - q[N]) / (Δx))  - G
+        q_right_ghost = q[N-1] + ((4 * Δx * q[N] * L) / (D(q[N]))) * ( (m/η)*F(q[N]) )#+ G )
+        dLdt = (-(1/η)* F(q[N])) - (D(q[N])/(2 * q[N] * L))*((q_right_ghost - q[N]) / (Δx))  #- G
 
     end
 
     dqidt = 0.0
     for ii in 1:N
         if ii == 1
-            #dqidt = ( (2 * α)/(L^2 * q[1]^2) ) * ( ((q[2] - q[1]) / p.Δx^2) )
             q_left_ghost = q[2]
             # different diffusivity averaging methods
             if diffusivity_method == "arithmetic"
@@ -130,7 +128,7 @@ function rhs!(du, u, p::FBParams, t)
     return nothing
 end
 
-function rhs_Baker!(du, u, p::FBParams, t)
+function rhs_Baker_in_ρ!(du, u, p::FBParams, t)
     α, k, a, η, Δx, N = p.α, p.k, p.a, p.η, p.Δx, p.N
     right_BC = p.rBC
     left_BC = p.lBC
@@ -154,14 +152,14 @@ function rhs_Baker!(du, u, p::FBParams, t)
         q_right_ghost = q[N-1]
         dLdt = 0.0
     elseif right_BC == :free
-        m = 100
-        x = range(0, stop=1.0, length=p.N)
-        itp = Interpolations.linear_interpolation(x, P.(q));
-        g_integral= quadgk(x -> itp(x), 0, 1)[1]
-        G = g_integral * L
+        #m = 100
+        #x = range(0, stop=1.0, length=p.N)
+        #itp = Interpolations.linear_interpolation(x, P.(q));
+        #g_integral= quadgk(x -> itp(x), 0, 1)[1]
+        #G = g_integral * L
         #q_right_ghost = q[N-1] + ((4 * Δx * q[N] * L) / (η * D(q[N]))) * F(q[N]) # ghost node with \mathcal{O}(Δx^2) accuracy
         q_right_ghost = q[N-1] + ((4 * Δx * q[N] * L) / (D(q[N]))) * ( (1/η)*F(q[N]))
-        dLdt = -2/η * F(q[N]) #-(D(q[N])/(2 * q[N] * L))*((q_right_ghost - q[N]) / (Δx))
+        dLdt = -(D(q[N])/(q[N] * L))*((q_right_ghost - q[N-1]) / (2*Δx)) #-2/η * F(q[N]) #-(D(q[N])/(2 * q[N] * L))*((q_right_ghost - q[N]) / (Δx))
 
     end
 
