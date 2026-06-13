@@ -35,8 +35,10 @@ Seed = 1
 NumSaveTimePoints = 50001
 sol = MCTG.FreeBoundarySimulation(FB_IC, Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed, Seed, NumSaveTimePoints);
 
-first_term_disc = -[Domain.m / CellMech.η * CellMech.kₛ * (1/sol.Density[ii][end] - CellMech.a) for ii in eachindex(sol.Density)][2:4000:end]
-t_disc = sol.t[2:4000:end]
+idx_for_plots = [2, 11, 101, 1001, 10001, 20001, 30001, 40001, 50001]
+
+first_term_disc = -[Domain.m / CellMech.η * CellMech.kₛ * (1/sol.Density[ii][end] - CellMech.a) for ii in eachindex(sol.Density)][idx_for_plots]#[2:4000:end]
+t_disc = sol.t[idx_for_plots]#[2:4000:end]
 
 ## -----------------------------------------------------------------------------
 # Series solution for the first term in dL/dt (continuum limit)
@@ -63,9 +65,11 @@ const STAR_PURPLE    = "#CC79A7"   # discrete m=10 stars
 fig2 = Figure(size = (900, 800))
 ax2 = Axis(fig2[1, 1];
     xlabel = L"t",
-    ylabel = L"\log |\mathcal{C}_{m}(t)| ",
-    #xscale = log10,
+    ylabel = L"|\mathcal{C}_{m}(t)| ",
+    xscale = log10,
     yscale = log10,
+    xminorticksvisible = true,
+    yminorticksvisible = true
 )
 
 ts_dense = LinRange(1e-3, T, 400)#10 .^ range(-4, 2; length = 200)
@@ -91,5 +95,6 @@ t_crossover = -lambertw(-π/32, 0) * (8 * N^2 * eta_star)/ (k_star * pi)
 scatter!(ax2, t_crossover, abs.(L_series(t_crossover; P=300)); color=:green, markersize=20, label="t ≈ W₀(-π/32)((N² η)/(π k))", strokecolor=:black, strokewidth=0.8)
 # plotting discrete solution for m=20
 scatter!(ax2, t_disc, abs.(first_term_disc); color=:orange, marker = :star5, markersize=20, label="discrete m = $m", strokecolor=:black, strokewidth=0.8)
-axislegend(ax2; position = :rt)
+axislegend(ax2; position = :lb)
 display(fig2)
+save("short-long-term-behaviour_p_300_disc_log_log_version.png", fig2)

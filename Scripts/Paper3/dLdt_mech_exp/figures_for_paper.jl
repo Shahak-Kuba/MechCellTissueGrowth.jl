@@ -17,7 +17,7 @@ const REDDISH_PURPLE = "#CC79A7"
 
 
 
-N      = 10            # the integer N in theta_p formula
+N_cells      = 10            # the integer N in theta_p formula
 k_star = 4          # k*
 eta_star = 1          # eta*  (avoiding name collision with `eta`)
 ell0   = 1.0          # l(0)
@@ -50,7 +50,7 @@ t_disc = []
 
 for m_value in m_vals
     # discrete model Params
-    Domain = MCTG.DomainProperties_t(N=N, m = m_value, domain_type="1D")
+    Domain = MCTG.DomainProperties_t(N=N_cells, m = m_value, domain_type="1D")
     # run discrete simulation
     sol_disc = MCTG.FreeBoundarySimulation(FB_IC, Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed, 1, NumSaveTimePoints);
     push!(all_disc_solutions, sol_disc)
@@ -82,29 +82,36 @@ q0_func = z -> q₀
 # solving continuum model without correction term Baker et al. 2019
 p = MCTG.FBParams(α=α, η=η, k=k, a=a, L0=L0, N=N, rBC=:free, lBC=:fixed, F=Ffunc, D=Dfunc, P=Pfunc, A=Afunc)
 y0 = MCTG.make_initial_condition_FB(p.N; U0fun = q0_func, L0=p.L0)
+
+# for solving in q 
+#p = MCTG.FBParams_w_correction(α, k, a, η, Δx, L0, N, N_IC, q₀, rBC, Ffunc, Dfunc, Pfunc, Afunc)
+#y0 = MCTG.make_initial_condition_FB(p.N; U0fun = q0_func, L0=p.L0)
 # solve PDE
-prob = ODEProblem(MCTG.rhs_Baker!, y0, tspan, p)
+prob = ODEProblem(MCTG.rhs_Baker_in_ρ!, y0, tspan, p)
 sol_Baker = solve(prob, Rodas5P(), saveat=vcat([0.0:0.1:tspan[2]]...))
 
 # solving continuum model with correction term
 p = MCTG.FBParams_w_correction(α, k, a, η, Δx, L0, N, N_IC, q₀, rBC, Ffunc, Dfunc, Pfunc, Afunc)
 y0 = MCTG.make_initial_condition_FB(p.N; U0fun = q0_func, L0=p.L0)
+#y0[end-1] = 1/a_star
 # solve PDE
+#tspan = (0.0, 0.000001)
 prob = ODEProblem(MCTG.rhs_with_correction!, y0, tspan, p)
 sol = solve(prob, Rodas5P(), saveat=vcat([0.0:0.1:tspan[2]]...))
 
 # plotting L(t) for discrete and continuum models
 f = Figure(size=(1800,800));
-ax = Axis(f[1,1], aspect=1, xlabel=L"$t$", ylabel=L"$L(t)$", limits=(-1,51,9,51));
+ax = Axis(f[1,2], aspect=1, xlabel=L"$t$", ylabel=L"$L(t)$", limits=(-1,51,9,51));
 L_cont = [sol_Baker.u[i][end] for i in eachindex(sol_Baker.t)]
 lines!(ax, sol_Baker.t, L_cont, label=L"\text{Baker et al. 2019}", linewidth=4, color = BLUISH_GREEN);
+
 # continuum solution for L(t) with correction term
 L_cont = [sol.u[i][end] for i in eachindex(sol.t)]
 lines!(ax, sol.t, L_cont, label=L"\text{Continuum limit}", linewidth=4, color = BLACK);
 # discrete solution for L(t)
 clrs = [VERMILLION, SKY_BLUE, REDDISH_PURPLE, YELLOW]
 for ii in eachindex(all_disc_solutions)
-    scatter!(ax, all_disc_solutions[ii].t[1:100:end], all_disc_solutions_boundary[ii][1:100:end], label=L"m=%$(m_vals[ii])", markersize=15, color=clrs[ii], strokecolor=BLACK, strokewidth=0.8);
+    scatter!(ax, all_disc_solutions[ii].t[1:100:end], all_disc_solutions_boundary[ii][1:100:end], label=L"m=%$(m_vals[ii]),\; M = %$(N_cells*m_vals[ii])", markersize=15, color=clrs[ii], strokecolor=BLACK, strokewidth=0.8);
     scatter!(ax, all_disc_solutions[ii].t[end], all_disc_solutions_boundary[ii][end], markersize=15, color=clrs[ii], strokecolor=BLACK, strokewidth=0.8);
 end
 axislegend(ax, position=:rb, framevisible=false, patchsize=(40, 10))
@@ -122,7 +129,7 @@ lines!(ax, sol.t, L_cont, label=L"\text{Continuum limit}", linewidth=5, color = 
 # discrete solution for L(t)
 clrs = [VERMILLION, SKY_BLUE, REDDISH_PURPLE, YELLOW]
 for ii in eachindex(all_disc_solutions)
-    scatter!(ax, all_disc_solutions[ii].t[1:100:end], all_disc_solutions_boundary[ii][1:100:end], label=L"m=%$(m_vals[ii])", markersize=15, color=clrs[ii], strokecolor=BLACK, strokewidth=0.8);
+    scatter!(ax, all_disc_solutions[ii].t[1:100:end], all_disc_solutions_boundary[ii][1:100:end], label=L"m=%$(m_vals[ii]), M = %$(N_cells*m_vals[ii])", markersize=15, color=clrs[ii], strokecolor=BLACK, strokewidth=0.8);
     scatter!(ax, all_disc_solutions[ii].t[end], all_disc_solutions_boundary[ii][end], markersize=15, color=clrs[ii], strokecolor=BLACK, strokewidth=0.8);
 end
 display(f2)
@@ -148,7 +155,7 @@ T = 50
 m = 20
 q₀ = 1.0;
 L0 = 10.0;
-Domain = MCTG.DomainProperties_t(N=N, m = m, domain_type = "1D")
+Domain = MCTG.DomainProperties_t(N=N_cells, m = m, domain_type = "1D")
 CellMech = MCTG.CellMechProperties_t(kₛ=k_star, kf = 0, a = a_star, η = eta_star, restoring_force="hookean")
 Prolif = MCTG.CellEvent_t()
 Death = MCTG.CellEvent_t()
@@ -181,9 +188,10 @@ end
 # Plotting the series solution and its leading-order short- and long-time asymptotics
 ## -----------------------------------------------------------------------------
 
-ax2 = Axis(f[1, 2];
+ax2 = Axis(f[1, 1];
+    aspect=1,
     xlabel = L"t",
-    ylabel = L"|\mathcal{C}_{m}(t)| ",
+    ylabel = L"|\mathcal{C}(t)| ",
     xscale = log10,
     yscale = log10,
     xminorticksvisible = true,

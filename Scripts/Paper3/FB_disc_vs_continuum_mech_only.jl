@@ -17,7 +17,7 @@ SimTime = MCTG.SimTime_t(Tmax=50, δt=0.0001, event_δt=0.0001)
 FB_IC = MCTG.FB_IC_t(q0 = x -> q₀, q0_der = x -> 0.0, L0 = L0)
 NumSaveTimePoints = 1001
 
-m_vals = [1,2,5,10]
+m_vals = [1,5,10,20]
 
 # output from discrete simulations
 all_disc_solutions = []

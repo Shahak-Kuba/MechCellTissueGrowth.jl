@@ -203,8 +203,6 @@ ax2 = Axis(fig2[1, 1];
  
 ts_dense = LinRange(1e-4, 50, 400)#10 .^ range(-4, 2; length = 200)
 vals_series = [L_series(t; P=300) for t in ts_dense]
-#vals_closed = [L_closed(t; K=30) for t in ts_dense]
-# Leading-order short-time:  (l(0)-a*) / sqrt(pi kappa t)
 #vals_leading_short = [ell0_minus_astar / sqrt(pi * kappa * t) for t in ts_dense]
 tau = (k, η, N, t) -> (k*pi^2*t) / (4 * N^2 * η)
 vals_leading_short = [((2 * ell0_minus_astar / N) / 4 ) * sqrt(pi / tau(k_star, eta_st, N, t)) for t in ts_dense]

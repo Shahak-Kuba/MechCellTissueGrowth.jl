@@ -150,3 +150,52 @@ generate_3_spring_FB_animation(k, a, η, l₁, "FB_3_spring_tension_anim"; speci
 generate_3_spring_FB_animation(k, a, η, l₁, "FB_3_spring_tension_C1_anim"; special_type="C1")
 generate_3_spring_FB_animation(k, a, η, l₁, "FB_3_spring_tension_C2_anim"; special_type="C2")
 generate_3_spring_FB_animation(k, a, η, l₁, "FB_3_spring_tension_C3_anim"; special_type="C3")
+
+function generate_spring_FB_animation(k, a, η, L0, animation_name; maxT=10.0, special_type="None")
+
+    Domain = MCTG.DomainProperties_t(N=10, m = 1, domain_type = "1D")
+    CellMech = MCTG.CellMechProperties_t(kₛ=k, kf = 0, a = a, restoring_force="hookean")
+    Prolif = MCTG.CellEvent_t()
+    Death = MCTG.CellEvent_t()
+    Embed = MCTG.CellEvent_t()
+    ProlifEmbed = MCTG.CellEvent_t()
+    SimTime = MCTG.SimTime_t(Tmax=maxT, δt=0.001, event_δt=0.001)
+    IC = collect(LinRange(0, L0, Domain.N * Domain.m + 1)[2:end])
+    NumSaveTimePoints = 1001
+    sol_disc = MCTG.FreeBoundarySimulation_given_IC(IC, Domain, CellMech, SimTime, Prolif, Death, Embed, ProlifEmbed, 1, NumSaveTimePoints);
+
+
+    # Create animation 
+    fig = Figure(size=(1800, 980), title="m = $(Domain.m), N = $(Domain.N)")
+    ax_springs = Axis(fig[1, 1], xlabel=L"x", limits=(0, maximum([L0 + 0.5, CellMech.a * Domain.N + 1] ), -0.1, 0.1))
+    ax_L_t = Axis(fig[2, 1], xlabel=L"t", ylabel=L"L(t)", limits=(0, maxT/2, minimum([L0 - 0.5, 14]), maximum([L0 + 0.5, CellMech.a * Domain.N + 1] )))
+
+    # precacluting L(t) for discrete and continuum models
+    L_disc = [sol_disc.u[i][1, end] for i in eachindex(sol_disc.t)]
+
+    anim_name = animation_name * "special_type_$special_type.gif"
+    record(fig, anim_name, 1:501; framerate=20) do frame
+        t_idx = frame
+        t_val = sol_disc.t[t_idx]
+        t_val_title = @sprintf("t = %.2f", t_val)
+        # Discrete spring model
+        empty!(ax_springs)
+        ax_springs.title = "N = $(Domain.N), k = $k, η = $η, a = $a"
+        x_springs = sol_disc.u[t_idx][1,:]
+        y_springs = zeros(length(x_springs))
+        lines!(ax_springs, x_springs, y_springs, linewidth=5, color=:black)
+        #scatter!(ax_springs, x_springs, y_springs, markersize=25, marker=:circle, color=:grey)
+        scatter!(ax_springs, x_springs[1:Domain.m:end], y_springs[1:Domain.m:end], markersize=25, marker=:circle, color=:red)
+        text!(ax_springs, 25.5, 0.08, text = t_val_title, align = (:center, :center), fontsize=48)
+
+        # Evolution of spring lengths
+        empty!(ax_L_t)
+        lines!(ax_L_t, sol_disc.t[1:t_idx], L_disc[1:t_idx], label="Discrete", linewidth=5, color=:black)
+    end
+    
+    return nothing
+
+end
+
+k= 4; η = 1; a = 5; L0 = 10.0; T = 50.0;       # eta*  (avoiding name collision with `eta`)
+generate_spring_FB_animation(k, a, η, L0, "FB_spring_anim"; maxT=T, special_type="None")
